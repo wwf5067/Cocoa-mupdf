@@ -23,7 +23,9 @@ mupdf-x11还是用XQuartz来执行，这个可以删除，mupdf-gl就是我们�
 ## 使用方法
 
 打开filename.pdf的文件，并定位到82页
+
 	mupdf-gl filename.pdf 82
+	
 * +,= 放大
 * - 缩小
 * w 适合宽度
