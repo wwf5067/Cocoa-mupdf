@@ -1,3 +1,33 @@
+## 编译问题
+mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，也就意味着Splitview不能使用，但glfw可以用原生的Cocoa窗口，
+所以编译的时候一定要设置HAVE_GLFW开关。
+由于Makefile的问题，自动编译glfw会使得它包含X11，建议先进入glfw目录下执行`cmake`和`make`，再返回主目录执行下面的make命令：
+    make HAVE_GLFW=yes HAVE_X11=yes HAVE_CURL=no verbose=yes GLFW_LIBS="-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo"
+这里又可以看有Makefile的一个小问题，如果HAVE_X11设置为no，那platform/gl下面的几个文件都不会编译，
+所以这里也设置打开。如果一切正常的话，在主目录下会产生一个build/release目录，有两个文件：
+	mupdf-x11
+	mupdf-gl
+mupdf-x11还是用XQuartz来执行，这个可以删除，mupdf-gl就是我们最终的目标程序。
+
+## mupdf-gl中的修改
+1. gl-main.c: update_title 中没有用utf-8处理文件名，在文件名包含汉字且超过15个的时候，程序会crash
+2. 命令行的跳转到指定<page>功能没有实现，但是help中却显示有这个功能？！ 好吧，现在我帮他们实现了
+3. 其他一些细节问题，例如h,j,k,l的滚屏也没有实现，我加上去了
+
+## 使用方法
+打开filename.pdf的文件，并定位到82页
+	mupdf-gl filename.pdf 82
++,= 放大
+- 缩小
+w 适合宽度
+H 适合高度
+h,j,k,l 移动
+v 反转颜色(晚上用不错)
+q 退出
+……
+
+---
+
 ABOUT
 
 MuPDF is a lightweight PDF, XPS, EPUB and CBZ viewer and parser/rendering
