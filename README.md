@@ -31,22 +31,23 @@ mupdf-x11还是用XQuartz来执行，这个可以删除，mupdf-gl就是我们�
 * w 适合宽度
 * H 适合高度
 * h,j,k,l 移动
+* d,u,b,<space> 翻页
 * v 反转颜色(晚上用不错)
 * q 退出
 * ……
 
 ## 使用效果
 
-用`o`打开和关闭书签栏
+### 用`o`打开和关闭书签栏
 
 ![Outline](http://ww3.sinaimg.cn/mw690/3e37e59cgw1f73rgqu058j20r40l8qdi.jpg)
 
-用`[`和`]`进行左右旋转微调，再也不担心倾斜问题了
+### 用`[`和`]`进行左右旋转微调，再也不担心倾斜问题了
 
 ![before rotate](http://ww2.sinaimg.cn/mw690/3e37e59cgw1f73rgm7xudj20si0kudj0.jpg)
 ![after rotate](http://ww3.sinaimg.cn/mw690/3e37e59cgw1f73rgkit87j20si0kujur.jpg)
 
-用`v`反色，夜间减少屏幕亮度刺眼
+### 用`v`反色，夜间减少屏幕亮度刺眼
 
 ![no invert](http://ww3.sinaimg.cn/mw690/3e37e59cgw1f73rggc44ij20j70kuwk9.jpg)
 ![invert](http://ww1.sinaimg.cn/mw690/3e37e59cgw1f73rgj32akj20j70ku7a2.jpg)
