@@ -1,6 +1,9 @@
 #include "gl-app.h"
 
 #include "mupdf/pdf.h" /* for pdf specifics and forms */
+#if 0
+#include <GLUT/glut.h>
+#endif
 
 enum
 {
@@ -168,6 +171,7 @@ static float oldrotate = 0, currentrotate = 0;
 static fz_matrix page_ctm, page_inv_ctm;
 
 static int isfullscreen = 0;
+static int g_oldinvertcolor = 0, g_isinvertcolor = 0;
 static int showoutline = 0;
 static int showlinks = 0;
 static int showsearch = 0;
@@ -201,12 +205,18 @@ static unsigned int next_power_of_two(unsigned int n)
 
 static void update_title(void)
 {
-	static char buf[256];
+	static char buf[1024];
+	/*
 	size_t n = strlen(title);
+	
+	// 大于15个汉字就会出问题，需要用utf-8的字符处理函数，现在临时将buf加大，并且不裁剪
 	if (n > 50)
 		sprintf(buf, "...%s - %d / %d", title + n - 50, currentpage + 1, fz_count_pages(ctx, doc));
 	else
 		sprintf(buf, "%s - %d / %d", title, currentpage + 1, fz_count_pages(ctx, doc));
+	*/
+
+	snprintf(buf, sizeof (buf), "%s - %d / %d", title, currentpage + 1, fz_count_pages(ctx, doc));
 	glfwSetWindowTitle(window, buf);
 }
 
@@ -227,8 +237,7 @@ void texture_from_pixmap(struct texture *tex, fz_pixmap *pix)
 	{
 		if (tex->w > max_texture_size || tex->h > max_texture_size)
 			fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", tex->w, tex->h, max_texture_size);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->w, tex->h, 0, pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->w, tex->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pix->samples);
 		tex->s = 1;
 		tex->t = 1;
 	}
@@ -238,9 +247,8 @@ void texture_from_pixmap(struct texture *tex, fz_pixmap *pix)
 		int h2 = next_power_of_two(tex->h);
 		if (w2 > max_texture_size || h2 > max_texture_size)
 			fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", w2, h2, max_texture_size);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w2, h2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->w, tex->h, pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->w, tex->h, GL_RGBA, GL_UNSIGNED_BYTE, pix->samples);
 		tex->s = (float)tex->w / w2;
 		tex->t = (float)tex->h / h2;
 	}
@@ -263,22 +271,21 @@ void render_page(void)
 	links = NULL;
 	links = fz_load_links(ctx, page);
 
-	pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx), 0);
+	pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx));
+    if (g_isinvertcolor)
+        fz_invert_pixmap (ctx, pix);
 	texture_from_pixmap(&page_tex, pix);
 	fz_drop_pixmap(ctx, pix);
 
 	annot_count = 0;
 	for (annot = fz_first_annot(ctx, page); annot; annot = fz_next_annot(ctx, annot))
-	{
-		pix = fz_new_pixmap_from_annot(ctx, annot, &page_ctm, fz_device_rgb(ctx), 1);
-		texture_from_pixmap(&annot_tex[annot_count++], pix);
-		fz_drop_pixmap(ctx, pix);
-		if (annot_count >= nelem(annot_tex))
-		{
-			fz_warn(ctx, "too many annotations to display!");
-			break;
-		}
-	}
+    {
+        pix = fz_new_pixmap_from_annot(ctx, annot, &page_ctm, fz_device_rgb(ctx));
+        if (g_isinvertcolor)
+            fz_invert_pixmap (ctx, pix);
+        texture_from_pixmap(&annot_tex[annot_count++], pix);
+        fz_drop_pixmap(ctx, pix);
+    }
 
 }
 
@@ -886,9 +893,9 @@ static void do_app(void)
 			}
 			break;
 		case 'f': toggle_fullscreen(); break;
-		case 'w': shrinkwrap(); break;
+		case 'W': shrinkwrap(); break;
 		case 'o': toggle_outline(); break;
-		case 'W': auto_zoom_w(); break;
+		case 'w': auto_zoom_w(); break;
 		case 'H': auto_zoom_h(); break;
 		case 'Z': auto_zoom(); break;
 		case 'z': currentzoom = number > 0 ? number : DEFRES; break;
@@ -896,18 +903,23 @@ static void do_app(void)
 		case '>': currentpage += 10 * fz_maxi(number, 1); break;
 		case ',': case KEY_PAGE_UP: currentpage -= fz_maxi(number, 1); break;
 		case '.': case KEY_PAGE_DOWN: currentpage += fz_maxi(number, 1); break;
-		case 'b': number = fz_maxi(number, 1); while (number--) smart_move_backward(); break;
-		case ' ': number = fz_maxi(number, 1); while (number--) smart_move_forward(); break;
+        case 'b': case 'u': number = fz_maxi(number, 1); while (number--) smart_move_backward(); break;
+        case ' ': case 'd': number = fz_maxi(number, 1); while (number--) smart_move_forward(); break;
 		case 'g': jump_to_page(number - 1); break;
 		case 'G': jump_to_page(fz_count_pages(ctx, doc) - 1); break;
-		case '+': currentzoom = zoom_in(currentzoom); break;
+        case '+': case '=': currentzoom = zoom_in(currentzoom); break;
 		case '-': currentzoom = zoom_out(currentzoom); break;
-		case '[': currentrotate += 90; break;
-		case ']': currentrotate -= 90; break;
-		case 'l': showlinks = !showlinks; break;
+		case '[': currentrotate += 0.1; break;
+		case ']': currentrotate -= 0.1; break;
+		case 'L': showlinks = !showlinks; break;
 		case 'i': showinfo = !showinfo; break;
+        case 'v': g_isinvertcolor = !g_isinvertcolor; break;
 		case '/': search_dir = 1; showsearch = 1; search_input.p = search_input.text; search_input.q = search_input.end; break;
 		case '?': search_dir = -1; showsearch = 1; search_input.p = search_input.text; search_input.q = search_input.end; break;
+		case 'k': scroll_y -= canvas_h / 5; break;
+		case 'j': scroll_y += canvas_h / 5; break;
+		case 'h': scroll_x -= canvas_w / 7; break;
+		case 'l': scroll_x += canvas_w / 7; break;
 		case KEY_UP: scroll_y -= 10; break;
 		case KEY_DOWN: scroll_y += 10; break;
 		case KEY_LEFT: scroll_x -= 10; break;
@@ -948,7 +960,7 @@ static void do_info(void)
 	int x = canvas_x + 4 * ui.lineheight;
 	int y = canvas_y + 4 * ui.lineheight;
 	int w = canvas_w - 8 * ui.lineheight;
-	int h = 9 * ui.lineheight;
+	int h = 7 * ui.lineheight;
 
 	glBegin(GL_TRIANGLE_STRIP);
 	{
@@ -974,10 +986,6 @@ static void do_info(void)
 		y = do_info_line(x, y, "Encryption", buf);
 	if (pdf_specifics(ctx, doc))
 	{
-		if (fz_lookup_metadata(ctx, doc, "info:Creator", buf, sizeof buf) > 0)
-			y = do_info_line(x, y, "PDF Creator", buf);
-		if (fz_lookup_metadata(ctx, doc, "info:Producer", buf, sizeof buf) > 0)
-			y = do_info_line(x, y, "PDF Producer", buf);
 		buf[0] = 0;
 		if (fz_has_permission(ctx, doc, FZ_PERMISSION_PRINT))
 			fz_strlcat(buf, "print, ", sizeof buf);
@@ -1004,13 +1012,15 @@ static void do_canvas(void)
 
 	float x, y;
 
-	if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate)
+	if (oldpage != currentpage || oldzoom != currentzoom || 
+            oldrotate != currentrotate || g_oldinvertcolor != g_isinvertcolor)
 	{
 		render_page();
 		update_title();
 		oldpage = currentpage;
 		oldzoom = currentzoom;
 		oldrotate = currentrotate;
+        g_oldinvertcolor = g_isinvertcolor;
 	}
 
 	if (ui.x >= canvas_x && ui.x < canvas_x + canvas_w && ui.y >= canvas_y && ui.y < canvas_y + canvas_h)
@@ -1312,6 +1322,7 @@ int main(int argc, char **argv)
 	float layout_h = DEFAULT_LAYOUT_H;
 	float layout_em = DEFAULT_LAYOUT_EM;
 	char *layout_css = NULL;
+    int pageno = 1;
 	int c;
 
 	while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:")) != -1)
@@ -1330,7 +1341,7 @@ int main(int argc, char **argv)
 
 	if (fz_optind < argc)
 	{
-		fz_strlcpy(filename, argv[fz_optind], sizeof filename);
+		fz_strlcpy(filename, argv[fz_optind++], sizeof filename);
 	}
 	else
 	{
@@ -1350,6 +1361,9 @@ int main(int argc, char **argv)
 		++title;
 	else
 		title = filename;
+
+    if (argc - fz_optind > 0)
+        pageno = atoi(argv[fz_optind++]);
 
 	memset(&ui, 0, sizeof ui);
 
@@ -1415,6 +1429,12 @@ int main(int argc, char **argv)
 		pdf_enable_js(ctx, pdf);
 
 	fz_layout_document(ctx, doc, layout_w, layout_h, layout_em);
+
+    /* Go to page number at startup*/
+    if (pageno > 1){
+        pageno = fz_min(pageno, fz_count_pages(ctx, doc));
+        jump_to_page(pageno - 1);
+    }
 
 	render_page();
 	update_title();
