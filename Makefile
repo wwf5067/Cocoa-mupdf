@@ -73,8 +73,8 @@ ALL_DIR += $(OUT)/cbz
 ALL_DIR += $(OUT)/html
 ALL_DIR += $(OUT)/gprf
 ALL_DIR += $(OUT)/tools
-ALL_DIR += $(OUT)/platform/x11
-ALL_DIR += $(OUT)/platform/x11/curl
+# ALL_DIR += $(OUT)/platform/x11
+# ALL_DIR += $(OUT)/platform/x11/curl
 ALL_DIR += $(OUT)/platform/gl
 ALL_DIR += $(OUT)/fonts
 
@@ -180,6 +180,9 @@ $(OUT)/%: $(OUT)/%.o
 $(OUT)/%.o : source/%.c | $(ALL_DIR)
 	$(CC_CMD)
 
+$(OUT)/%.o : source/%.m | $(ALL_DIR)
+	$(CC_CMD)
+
 $(OUT)/%.o : source/%.cpp | $(ALL_DIR)
 	$(CXX_CMD)
 
@@ -189,14 +192,14 @@ $(OUT)/%.o : scripts/%.c | $(OUT)
 $(OUT)/fonts/%.o : $(GEN)/%.c | $(ALL_DIR)
 	$(CC_CMD) -O0
 
-$(OUT)/platform/x11/%.o : platform/x11/%.c | $(ALL_DIR)
-	$(CC_CMD) $(X11_CFLAGS)
+# $(OUT)/platform/x11/%.o : platform/x11/%.c | $(ALL_DIR)
+# 	$(CC_CMD) $(X11_CFLAGS)
 
-$(OUT)/platform/x11/%.o: platform/x11/%.rc | $(OUT)
-	$(WINDRES_CMD)
+# $(OUT)/platform/x11/%.o: platform/x11/%.rc | $(OUT)
+# 	$(WINDRES_CMD)
 
-$(OUT)/platform/x11/curl/%.o : platform/x11/%.c | $(ALL_DIR)
-	$(CC_CMD) $(X11_CFLAGS) $(CURL_CFLAGS) -DHAVE_CURL
+# $(OUT)/platform/x11/curl/%.o : platform/x11/%.c | $(ALL_DIR)
+# 	$(CC_CMD) $(X11_CFLAGS) $(CURL_CFLAGS) -DHAVE_CURL
 
 $(OUT)/platform/gl/%.o : platform/gl/%.c | $(ALL_DIR)
 	$(CC_CMD) $(GLFW_CFLAGS)
@@ -281,18 +284,11 @@ $(MUTOOL_OBJ): $(FITZ_HDR) $(PDF_HDR)
 $(MJSGEN) : $(MJSGEN_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
 	$(LINK_CMD)
 
-MUJSTEST := $(OUT)/mujstest
-MUJSTEST_OBJ := $(addprefix $(OUT)/platform/x11/, jstest_main.o pdfapp.o)
-$(MUJSTEST_OBJ) : $(FITZ_HDR) $(PDF_HDR)
-$(MUJSTEST) : $(MUJSTEST_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
-	$(LINK_CMD)
-
-ifeq "$(HAVE_X11)" "yes"
-MUVIEW_X11 := $(OUT)/mupdf-x11
-MUVIEW_X11_OBJ := $(addprefix $(OUT)/platform/x11/, x11_main.o x11_image.o pdfapp.o)
-$(MUVIEW_X11_OBJ) : $(FITZ_HDR) $(PDF_HDR)
-$(MUVIEW_X11) : $(MUVIEW_X11_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
-	$(LINK_CMD) $(X11_LIBS)
+# MUJSTEST := $(OUT)/mujstest
+# MUJSTEST_OBJ := $(addprefix $(OUT)/platform/x11/, jstest_main.o pdfapp.o)
+# $(MUJSTEST_OBJ) : $(FITZ_HDR) $(PDF_HDR)
+# $(MUJSTEST) : $(MUJSTEST_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
+# 	$(LINK_CMD)
 
 ifeq "$(HAVE_GLFW)" "yes"
 MUVIEW_GLFW := $(OUT)/mupdf-gl
@@ -301,6 +297,13 @@ $(MUVIEW_GLFW_OBJ) : $(FITZ_HDR) $(PDF_HDR) platform/gl/gl-app.h
 $(MUVIEW_GLFW) : $(MUVIEW_GLFW_OBJ) $(MUPDF_LIB) $(THIRD_LIB) $(GLFW_LIB)
 	$(LINK_CMD) $(GLFW_LIBS)
 endif
+
+ifeq "$(HAVE_X11)" "yes"
+MUVIEW_X11 := $(OUT)/mupdf-x11
+MUVIEW_X11_OBJ := $(addprefix $(OUT)/platform/x11/, x11_main.o x11_image.o pdfapp.o)
+$(MUVIEW_X11_OBJ) : $(FITZ_HDR) $(PDF_HDR)
+$(MUVIEW_X11) : $(MUVIEW_X11_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
+	$(LINK_CMD) $(X11_LIBS)
 
 ifeq "$(HAVE_CURL)" "yes"
 MUVIEW_X11_CURL := $(OUT)/mupdf-x11-curl

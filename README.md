@@ -1,18 +1,7 @@
 ## 编译问题
-mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，也就意味着Splitview不能使用，但glfw可以用原生的Cocoa窗口，
-所以编译的时候一定要设置HAVE_GLFW开关。
+mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，也就意味着Splitview不能使用，但glfw可以用原生的Cocoa窗口。
 
-由于Makefile的问题，自动编译glfw会使得它包含X11，建议先进入glfw目录下执行`cmake`和`make`，再返回主目录执行下面的make命令：
-
-    make HAVE_GLFW=yes HAVE_X11=yes HAVE_CURL=no verbose=yes GLFW_LIBS="-framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo"
-    
-这里又可以看到Makefile的一个小问题，如果HAVE_X11设置为no，那platform/gl下面的几个文件都不会编译，
-所以这里也设置打开。如果一切正常的话，在主目录下会产生一个build/release目录，有两个文件：
-
-	mupdf-x11
-	mupdf-gl
-	
-mupdf-x11还是用XQuartz来执行，这个可以删除，mupdf-gl就是我们最终的目标程序。
+修改了Makefile相关的三个文件，现在获取代码之后，直接make就可以了，生成目标文件`build/release/mupdf-gl`。
 
 ## mupdf-gl中的修改
 

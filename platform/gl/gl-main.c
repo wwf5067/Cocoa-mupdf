@@ -1,9 +1,6 @@
 #include "gl-app.h"
 
 #include "mupdf/pdf.h" /* for pdf specifics and forms */
-#if 0
-#include <GLUT/glut.h>
-#endif
 
 enum
 {
@@ -222,6 +219,9 @@ static void update_title(void)
 
 void texture_from_pixmap(struct texture *tex, fz_pixmap *pix)
 {
+    if (g_isinvertcolor)
+        fz_invert_pixmap (NULL, pix);
+
 	if (!tex->id)
 		glGenTextures(1, &tex->id);
 	glBindTexture(GL_TEXTURE_2D, tex->id);
@@ -237,7 +237,8 @@ void texture_from_pixmap(struct texture *tex, fz_pixmap *pix)
 	{
 		if (tex->w > max_texture_size || tex->h > max_texture_size)
 			fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", tex->w, tex->h, max_texture_size);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->w, tex->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pix->samples);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->w, tex->h, 0, pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
 		tex->s = 1;
 		tex->t = 1;
 	}
@@ -247,8 +248,9 @@ void texture_from_pixmap(struct texture *tex, fz_pixmap *pix)
 		int h2 = next_power_of_two(tex->h);
 		if (w2 > max_texture_size || h2 > max_texture_size)
 			fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", w2, h2, max_texture_size);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w2, h2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->w, tex->h, GL_RGBA, GL_UNSIGNED_BYTE, pix->samples);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->w, tex->h, pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
 		tex->s = (float)tex->w / w2;
 		tex->t = (float)tex->h / h2;
 	}
@@ -271,21 +273,22 @@ void render_page(void)
 	links = NULL;
 	links = fz_load_links(ctx, page);
 
-	pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx));
-    if (g_isinvertcolor)
-        fz_invert_pixmap (ctx, pix);
+	pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx), 0);
 	texture_from_pixmap(&page_tex, pix);
 	fz_drop_pixmap(ctx, pix);
 
 	annot_count = 0;
 	for (annot = fz_first_annot(ctx, page); annot; annot = fz_next_annot(ctx, annot))
-    {
-        pix = fz_new_pixmap_from_annot(ctx, annot, &page_ctm, fz_device_rgb(ctx));
-        if (g_isinvertcolor)
-            fz_invert_pixmap (ctx, pix);
-        texture_from_pixmap(&annot_tex[annot_count++], pix);
-        fz_drop_pixmap(ctx, pix);
-    }
+	{
+		pix = fz_new_pixmap_from_annot(ctx, annot, &page_ctm, fz_device_rgb(ctx), 1);
+		texture_from_pixmap(&annot_tex[annot_count++], pix);
+		fz_drop_pixmap(ctx, pix);
+		if (annot_count >= nelem(annot_tex))
+		{
+			fz_warn(ctx, "too many annotations to display!");
+			break;
+		}
+	}
 
 }
 
@@ -893,9 +896,9 @@ static void do_app(void)
 			}
 			break;
 		case 'f': toggle_fullscreen(); break;
-		case 'W': shrinkwrap(); break;
+		case 'w': shrinkwrap(); break;
 		case 'o': toggle_outline(); break;
-		case 'w': auto_zoom_w(); break;
+		case 'W': auto_zoom_w(); break;
 		case 'H': auto_zoom_h(); break;
 		case 'Z': auto_zoom(); break;
 		case 'z': currentzoom = number > 0 ? number : DEFRES; break;
@@ -960,7 +963,7 @@ static void do_info(void)
 	int x = canvas_x + 4 * ui.lineheight;
 	int y = canvas_y + 4 * ui.lineheight;
 	int w = canvas_w - 8 * ui.lineheight;
-	int h = 7 * ui.lineheight;
+	int h = 9 * ui.lineheight;
 
 	glBegin(GL_TRIANGLE_STRIP);
 	{
@@ -986,6 +989,10 @@ static void do_info(void)
 		y = do_info_line(x, y, "Encryption", buf);
 	if (pdf_specifics(ctx, doc))
 	{
+		if (fz_lookup_metadata(ctx, doc, "info:Creator", buf, sizeof buf) > 0)
+			y = do_info_line(x, y, "PDF Creator", buf);
+		if (fz_lookup_metadata(ctx, doc, "info:Producer", buf, sizeof buf) > 0)
+			y = do_info_line(x, y, "PDF Producer", buf);
 		buf[0] = 0;
 		if (fz_has_permission(ctx, doc, FZ_PERMISSION_PRINT))
 			fz_strlcat(buf, "print, ", sizeof buf);

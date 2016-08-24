@@ -673,48 +673,58 @@ endif
 
 ifneq "$(wildcard $(GLFW_DIR)/README.md)" ""
 
-GLFW_LIB := $(OUT)/libglfw.a
-GLFW_OUT := $(OUT)/glfw
-GLFW_SRC := \
-	context.c \
-	glx_context.c \
-	init.c \
-	input.c \
-	linux_joystick.c \
-	monitor.c \
-	posix_time.c \
-	posix_tls.c \
-	window.c \
-	x11_init.c \
-	x11_monitor.c \
-	x11_window.c \
-	xkb_unicode.c \
+GLFW_LIB := $(OUT)/libglfw3.a
+# GLFW_OUT := $(OUT)/glfw
+# GLFW_SRC := \
+# 	context.c \
+# 	init.c \
+# 	input.c \
+# 	mach_time.c \
+# 	monitor.c \
+# 	posix_tls.c \
+# 	window.c \
+# 	cocoa_init.m \
+# 	cocoa_monitor.m \
+# 	cocoa_window.m \
+# 	iokit_joystick.m \
+# 	nsgl_context.m \
 
-GLFW_SRC_UNUSED := \
-	egl_context.c \
-	mach_time.c \
-	mir_init.c \
-	mir_monitor.c \
-	mir_window.c \
-	win32_init.c \
-	win32_monitor.c \
-	win32_time.c \
-	win32_tls.c \
-	win32_window.c \
-	winmm_joystick.c \
-	wgl_context.c \
-	wl_init.c \
-	wl_monitor.c \
-	wl_window.c \
+# GLFW_SRC_UNUSED := \
+# 	egl_context.c \
+# 	mir_init.c \
+# 	mir_monitor.c \
+# 	mir_window.c \
+# 	win32_init.c \
+# 	win32_monitor.c \
+# 	win32_time.c \
+# 	win32_tls.c \
+# 	win32_window.c \
+# 	winmm_joystick.c \
+# 	wgl_context.c \
+# 	wl_init.c \
+# 	wl_monitor.c \
+# 	wl_window.c \
+# 	x11_init.c \
+# 	x11_monitor.c \
+# 	x11_window.c \
 
-$(GLFW_LIB): $(addprefix $(GLFW_OUT)/, $(GLFW_SRC:%.c=%.o))
-$(GLFW_OUT):
-	$(MKDIR_CMD)
-$(GLFW_OUT)/%.o: $(GLFW_DIR)/src/%.c | $(GLFW_OUT)
-	$(CC_CMD) -D_GLFW_X11 -D_GLFW_GLX -D_GLFW_USE_OPENGL -D_GLFW_HAS_GLXGETPROCADDRESS
+
+# $(GLFW_LIB): $(addprefix $(GLFW_OUT)/, $(GLFW_SRC:%.c=%.o))
+
+# $(GLFW_OUT):
+# 	$(MKDIR_CMD)
+
+# $(GLFW_OUT)/%.o: $(GLFW_DIR)/src/%.c | $(GLFW_OUT)
+# 	$(CC_CMD) -D_GLFW_COCOA -D_GLFW_USE_CHDIR -D_GLFW_USE_MENUBAR -D_GLFW_USE_RETINA -D_GLFW_NSGL -D_GLFW_USE_OPENGL
+
+$(GLFW_LIB):
+	mkdir -p $(GLFW_DIR)/build
+	cd  $(GLFW_DIR)/build && cmake .. && $(MAKE) glfw
+	cd ../../..
+	cp $(GLFW_DIR)/build/src/libglfw3.a $@
 
 GLFW_CFLAGS := -I$(GLFW_DIR)/include
-GLFW_LIBS := -lGL -lX11 -lXcursor -lXrandr -lXinerama -lpthread
+GLFW_LIBS := -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
 
 HAVE_GLFW := yes
 

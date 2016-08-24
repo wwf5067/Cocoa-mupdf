@@ -4,6 +4,7 @@ generated
 include/mupdf/pdf/name-table.h
 source/pdf/pdf-name-table.h
 tags
+.tags*
 cscope.*
 
 # Editor and file browser turds:
@@ -27,6 +28,7 @@ cscope.*
 *.svg
 
 # Temporary and build files:
+*.a
 *.class
 *.jar
 *.o

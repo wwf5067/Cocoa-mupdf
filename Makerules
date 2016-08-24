@@ -26,10 +26,10 @@ CFLAGS += -pipe -g -DDEBUG
 LDFLAGS += -g
 else ifeq "$(build)" "release"
 CFLAGS += -pipe -O2 -DNDEBUG -fomit-frame-pointer
-LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+LDFLAGS += $(LDREMOVEUNREACH) -Wl
 else ifeq "$(build)" "small"
 CFLAGS += -pipe -Os -DNDEBUG -fomit-frame-pointer
-LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+LDFLAGS += $(LDREMOVEUNREACH) -Wl
 else ifeq "$(build)" "sanitize"
 CFLAGS += -pipe -g -DDEBUG -fsanitize=address -fno-omit-frame-pointer
 LDFLAGS += -fsanitize=address
@@ -41,7 +41,7 @@ CFLAGS += -pipe -g -DDEBUG -pg -fprofile-arcs -ftest-coverage
 LIBS += -lgcov
 else ifeq "$(build)" "native"
 CFLAGS += -pipe -O2 -DNDEBUG -fomit-frame-pointer -march=native -mfpmath=sse
-LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+LDFLAGS += $(LDREMOVEUNREACH) -Wl
 else ifeq "$(build)" "memento"
 CFLAGS += -pipe -g -DMEMENTO -DDEBUG
 LDFLAGS += -g -d -rdynamic
@@ -73,7 +73,7 @@ CFLAGS+= -U__STRICT_ANSI__
 # Mac OS X doesn't have pkg-config so we hard code paths.
 else ifeq "$(OS)" "MACOS"
 
-HAVE_X11 ?= yes
+HAVE_X11 = no
 HAVE_PTHREADS ?= yes
 
 # Mac OS X deprecated openssl, so the default is to not include it.
@@ -87,8 +87,8 @@ endif
 
 SYS_CURL_DEPS = -lpthread
 
-SYS_X11_CFLAGS = -I/usr/X11R6/include
-SYS_X11_LIBS = -L/usr/X11R6/lib -lX11 -lXext
+# SYS_X11_CFLAGS = -I/usr/X11R6/include
+# SYS_X11_LIBS = -L/usr/X11R6/lib -lX11 -lXext
 
 SYS_FREETYPE_CFLAGS = $(shell freetype-config --cflags)
 SYS_FREETYPE_LIBS = $(shell freetype-config --libs)

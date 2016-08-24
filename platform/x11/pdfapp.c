@@ -76,7 +76,9 @@ char *pdfapp_usage(pdfapp_t *app)
 		"R\t\t-- rotate right\n"
 		"h\t\t-- scroll left\n"
 		"j down\t\t-- scroll down\n"
+		"space down\t\t-- page down\n"
 		"k up\t\t-- scroll up\n"
+		"u up\t\t-- page up\n"
 		"l\t\t-- scroll right\n"
 		"+\t\t-- zoom in\n"
 		"-\t\t-- zoom out\n"
@@ -1301,6 +1303,23 @@ void pdfapp_onkey(pdfapp_t *app, int c, int modifiers)
 			break;
 		}
 
+	case 'd':
+	case ' ':
+		{
+			int h = fz_pixmap_height(app->ctx, app->image);
+			if (h <= app->winh || app->pany <= app->winh - h)
+			{
+				panto = PAN_TO_TOP;
+				app->pageno++;
+			}
+			else
+			{
+				app->pany -= app->winh/1.2;
+				pdfapp_showpage(app, 0, 0, 1, 0, 0);
+			}
+			break;
+		}
+
 	case 'k':
 		{
 			int h = fz_pixmap_height(app->ctx, app->image);
@@ -1317,6 +1336,22 @@ void pdfapp_onkey(pdfapp_t *app, int c, int modifiers)
 			break;
 		}
 
+	case 'u':
+		{
+			int h = fz_pixmap_height(app->ctx, app->image);
+			if (h <= app->winh || app->pany == 0)
+			{
+				panto = PAN_TO_BOTTOM;
+				app->pageno--;
+			}
+			else
+			{
+				app->pany += app->winh / 1.2;
+				pdfapp_showpage(app, 0, 0, 1, 0, 0);
+			}
+			break;
+		}
+
 	case 'l':
 		app->panx -= fz_pixmap_width(app->ctx, app->image) / 10;
 		pdfapp_showpage(app, 0, 0, 1, 0, 0);
@@ -1327,8 +1362,8 @@ void pdfapp_onkey(pdfapp_t *app, int c, int modifiers)
 	 */
 
 	case 'g':
-	case '\n':
-	case '\r':
+	//case '\n':
+	//case '\r':
 		if (app->numberlen > 0)
 			pdfapp_gotopage(app, atoi(app->number));
 		else
@@ -1403,7 +1438,8 @@ void pdfapp_onkey(pdfapp_t *app, int c, int modifiers)
 			app->pageno--;
 		break;
 
-	case ' ':
+	case '\n':
+	case '\r':
 		panto = DONT_PAN;
 		if (modifiers & 1)
 		{
