@@ -1325,6 +1325,69 @@ static void usage(const char *argv0)
 	exit(1);
 }
 
+static int load_reading_progress(const char* filename)
+{
+    int pages = 1;
+    char line[1024];
+    char buf[512];
+
+    const char* home = getenv ("HOME");
+    if (!home)
+        return 1;
+
+    sprintf(buf, "%s/.mupdf.history", home);
+    FILE *fp = fopen(buf, "r");
+    if( fp != NULL ) {
+        const int len = strlen(filename);
+
+        while( fgets(line,sizeof(line),fp) ) {
+            if (strncmp (line, filename, len) == 0) {
+                const char* pos = line + len + 1;
+                pages = fz_atoi (pos);
+                break;
+            }
+        }
+        fclose(fp);
+    }
+
+    return pages;
+}
+
+static void save_reading_progress(const char* filename, int pages)
+{
+    char line[1024];
+    char buftmp[512];
+    char buf[512];
+
+    const char* home = getenv ("HOME");
+    if (!home)
+        return;
+
+    sprintf(buftmp, "%s/.mupdf.history.tmp", home);
+    FILE *tmpfp = fopen (buftmp, "w");
+    if (!tmpfp)
+        return;
+    fprintf (tmpfp, "%s:%d\n", filename, pages + 1);
+
+    sprintf(buf, "%s/.mupdf.history", home);
+    FILE *fp = fopen(buf, "r");
+    if( fp != NULL ) {
+        const int len = strlen(filename);
+
+        while( fgets(line,sizeof(line),fp) ) {
+            if (strncmp (line, filename, len) != 0) {
+                fprintf (tmpfp, "%s", line);
+            }
+        }
+        fclose(fp);
+    }
+
+    fclose (tmpfp);
+
+    remove (buf);
+    rename (buftmp, buf);
+}
+
 #ifdef _MSC_VER
 int main_utf8(int argc, char **argv)
 #else
@@ -1380,6 +1443,9 @@ int main(int argc, char **argv)
 
     if (argc - fz_optind > 0)
         pageno = atoi(argv[fz_optind++]);
+    else {
+        pageno = load_reading_progress(title);
+    }
 
 	memset(&ui, 0, sizeof ui);
 
@@ -1484,6 +1550,9 @@ int main(int argc, char **argv)
 	fz_drop_context(ctx);
 
 	glfwTerminate();
+
+    // save reading progress.
+    save_reading_progress(title, currentpage);
 
 	return 0;
 }
