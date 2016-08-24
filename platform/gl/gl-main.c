@@ -729,6 +729,15 @@ static void toggle_fullscreen(void)
 		glutReshapeWindow(oldw, oldh);
 		isfullscreen = 0;
 	}
+#else
+	if (!isfullscreen){
+		glfwMaximizeWindow (window);
+		isfullscreen = 1;
+	}
+	else{
+		glfwRestoreWindow(window);
+		isfullscreen = 0;
+	}
 #endif
 }
 
