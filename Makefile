@@ -408,6 +408,7 @@ all: libs apps
 
 clean:
 	rm -rf $(OUT)
+	rm -rf $(GLFW_DIR)/build
 nuke:
 	rm -rf build/* $(GEN) $(NAME_GEN)
 
