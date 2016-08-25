@@ -22,6 +22,7 @@
 [submodule "thirdparty/glfw"]
 	path = thirdparty/glfw
 	url = https://github.com/glfw/glfw.git
+    ignore = dirty
 [submodule "thirdparty/curl"]
 	path = thirdparty/curl
 	url = git://git.ghostscript.com/thirdparty/curl.git
