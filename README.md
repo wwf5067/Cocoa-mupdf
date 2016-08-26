@@ -14,6 +14,10 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 打开filename.pdf的文件，并定位到82页
 
 	mupdf-gl filename.pdf 82
+
+打开的同时设置阅读的背景色
+
+	mupdf-gl -C 0xfdf6e3 filename.pdf
 	
 * +,= 放大
 * - 缩小
@@ -41,6 +45,10 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 ![no invert](http://ww3.sinaimg.cn/mw690/3e37e59cgw1f73rggc44ij20j70kuwk9.jpg)
 ![invert](http://ww1.sinaimg.cn/mw690/3e37e59cgw1f73rgj32akj20j70ku7a2.jpg)
 
+### 随意设置背景色，总有适合你的
+
+![solarized](http://ww4.sinaimg.cn/mw690/3e37e59cgw1f77e8jv2kjj20m20ku463.jpg)
+![green](http://ww2.sinaimg.cn/mw690/3e37e59cgw1f77e8e4qxvj20m20kun4d.jpg)
 
 ---
 
