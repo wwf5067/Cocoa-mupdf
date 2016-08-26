@@ -30,6 +30,8 @@ static int has_ARB_texture_non_power_of_two = 1;
 static GLint max_texture_size = 8192;
 
 static int ui_needs_update = 0;
+/* backgroud color */
+static GLuint g_backcolor = 0xffffff;
 
 static void ui_begin(void)
 {
@@ -103,7 +105,13 @@ void ui_draw_image(struct texture* tex, float x, float y)
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_TRIANGLE_STRIP);
     {
-        glColor4f(1, 1, 1, 1);
+        GLubyte red, green, blue;
+
+        red = (g_backcolor >> 16) & 0xFF;
+        green = (g_backcolor >> 8) & 0xFF;
+        blue = g_backcolor & 0xFF;
+
+        glColor4ub(red, green, blue, 255);
         glTexCoord2f(0, tex->t);
         glVertex2f(x + tex->x, y + tex->y + tex->h);
         glTexCoord2f(0, 0);
@@ -1361,6 +1369,7 @@ static void usage(const char* argv0)
     fprintf(stderr, "\t-H -\tpage height for EPUB layout\n");
     fprintf(stderr, "\t-S -\tfont size for EPUB layout\n");
     fprintf(stderr, "\t-U -\tuser style sheet for EPUB layout\n");
+    fprintf(stderr, "\t-C -\tset backgroud color, E.g 0xfdf6e3\n");
     exit(1);
 }
 
@@ -1395,21 +1404,21 @@ static int load_reading_progress(const char* filename)
 static void save_reading_progress(const char* filename, int pages)
 {
     char line[1024];
-    char buftmp[512];
-    char buf[512];
+    char temp_file[512];
+    char original_file[512];
 
     const char* home = getenv("HOME");
     if (!home)
         return;
 
-    sprintf(buftmp, "%s/.mupdf.history.tmp", home);
-    FILE* tmpfp = fopen(buftmp, "w");
+    sprintf(temp_file, "%s/.mupdf.history.tmp", home);
+    FILE* tmpfp = fopen(temp_file, "w");
     if (!tmpfp)
         return;
     fprintf(tmpfp, "%s:%d\n", filename, pages + 1);
 
-    sprintf(buf, "%s/.mupdf.history", home);
-    FILE* fp = fopen(buf, "r");
+    sprintf(original_file, "%s/.mupdf.history", home);
+    FILE* fp = fopen(original_file, "r");
     if (fp != NULL) {
         const int len = strlen(filename);
 
@@ -1419,12 +1428,11 @@ static void save_reading_progress(const char* filename, int pages)
             }
         }
         fclose(fp);
+        remove(original_file);
     }
 
     fclose(tmpfp);
-
-    remove(buf);
-    rename(buftmp, buf);
+    rename(temp_file, original_file);
 }
 
 #ifdef _MSC_VER
@@ -1443,7 +1451,7 @@ int main(int argc, char** argv)
     int pageno = 1;
     int c;
 
-    while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:")) != -1) {
+    while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:C:c:")) != -1) {
         switch (c) {
         default:
             usage(argv[0]);
@@ -1465,6 +1473,10 @@ int main(int argc, char** argv)
             break;
         case 'U':
             layout_css = fz_optarg;
+            break;
+        case 'C':
+        case 'c':
+            g_backcolor = strtol(fz_optarg, NULL, 16);
             break;
         }
     }
