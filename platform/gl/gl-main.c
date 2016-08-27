@@ -33,6 +33,16 @@ static int ui_needs_update = 0;
 /* backgroud color */
 static GLuint g_backcolor = 0xffffff;
 
+static GLuint get_random_backcolor(void)
+{
+    /*static const GLuint sa_bkcolor_list[] = {0xFFFFFF, 0xEEE8D5, 0xFDF6E3, 0xCEC7C1, 0xa5adb0, 0xb58900};*/
+    //srand(time(0)); //use current time as seed for random generator
+    int random_variable = rand() ; // % nelem(sa_bkcolor_list);
+
+    /*return sa_bkcolor_list[random_variable];*/
+    return (GLuint)random_variable;
+}
+
 static void ui_begin(void)
 {
     ui_needs_update = 0;
@@ -864,6 +874,9 @@ static void do_app(void)
         case 'z':
             currentzoom = number > 0 ? number : DEFRES;
             break;
+        case 'c':
+            g_backcolor = get_random_backcolor();
+            break;
         case '<':
             currentpage -= 10 * fz_maxi(number, 1);
             break;
@@ -1204,6 +1217,12 @@ static void on_char(GLFWwindow* window, unsigned int key, int mod)
 {
     ui.key = key;
     ui.mod = mod;
+
+    /* Let Shift + Space == PageUp */
+    if (GLFW_MOD_SHIFT == mod && ' ' == key){
+        ui.key = 'b';
+    }
+
     run_main_loop();
     ui.key = ui.mod = 0;
 }
