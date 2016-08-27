@@ -1,13 +1,16 @@
-## 编译问题
-mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，也就意味着Splitview不能使用，但glfw可以用原生的Cocoa窗口。
+## 编译
+mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，也就意味着Splitview不能使用，要用原生的Cocoa窗口。
 
-修改了Makefile相关的三个文件，现在获取代码之后，直接make就可以了，生成目标文件`build/release/mupdf-gl`。
+修改了Makefile相关的三个文件，直接make就可以了，生成使用Cocoa窗口的目标文件`build/release/mupdf-gl`。
 
 ## mupdf-gl中的修改
 
-1. gl-main.c: update_title 中没有用utf-8处理文件名，在文件名包含汉字且超过15个的时候，程序会crash
+1. `gl-main.c: update_title` 在文件名包含汉字且超过15个的时候，程序会crash
 2. 命令行的跳转到指定<page>功能没有实现，但是help中却显示有这个功能？！ 好吧，现在我帮他们实现了
-3. 其他一些细节问题，例如h,j,k,l的滚屏也没有实现，我加上去了
+3. 其他一些细节问题，例如h,j,k,l的滚屏也没有实现，现在加上去了
+4. 增加了背景色功能，可以任意指定色彩，在程序运行中，也可以随时用`C`来随机选择颜色
+5. 增加了保存阅读页面位置的记录功能，打开文件如没有指定页面位置，就会自动跳转到上次的阅读页面
+6. 修改了其他一些问题
 
 ## 使用方法
 
