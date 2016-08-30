@@ -27,5 +27,5 @@
 	path = thirdparty/curl
     url = git://git.ghostscript.com/thirdparty/curl.git
 [submodule "thirdparty/tinyfiledialogs"]
-    path = thirdparty/thinyfiledialogs
-    url = git://git.code.sf.net/p/tinyfiledialogs/code
+	path = thirdparty/tinyfiledialogs
+	url = git://git.code.sf.net/p/tinyfiledialogs/code
