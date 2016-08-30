@@ -1,6 +1,7 @@
 #include "gl-app.h"
 
 #include "mupdf/pdf.h" /* for pdf specifics and forms */
+#include "tinyfiledialogs.h"
 
 enum {
     /* Screen furniture: aggregate size of unusable space from title bars, task bars, window borders, etc */
@@ -1470,7 +1471,7 @@ int main(int argc, char** argv)
     int pageno = 1;
     int c;
 
-    while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:C:c:")) != -1) {
+    while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:C:h:")) != -1) {
         switch (c) {
         default:
             usage(argv[0]);
@@ -1494,8 +1495,10 @@ int main(int argc, char** argv)
             layout_css = fz_optarg;
             break;
         case 'C':
-        case 'c':
             g_backcolor = strtol(fz_optarg, NULL, 16);
+            break;
+        case 'h':
+            usage(argv[0]);
             break;
         }
     }
@@ -1508,7 +1511,22 @@ int main(int argc, char** argv)
         if (!win_open_file(filename, sizeof filename))
             exit(0);
 #else
-        usage(argv[0]);
+        /*usage(argv[0]);*/
+        char const * lTheOpenFileName;
+        char const * lFilterPatterns[] = {"*.pdf"};
+
+        lTheOpenFileName = tinyfd_openFileDialog(
+                "Please choose a pdf file",
+                "",
+                nelem(lFilterPatterns),
+                lFilterPatterns,
+                NULL,
+                0);
+        if (lTheOpenFileName){
+            fz_strlcpy(filename, lTheOpenFileName, sizeof(filename));
+        } else {
+            usage(argv[0]);
+        }
 #endif
     }
 
