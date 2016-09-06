@@ -26,6 +26,71 @@ struct ui ui;
 fz_context* ctx = NULL;
 GLFWwindow* window = NULL;
 
+static const int zoom_list[] = { 18, 24, 36, 48, 54, 64, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252, 264, 276, 288, 300, 312, 324, 336, 348, 360, 372, 384, 396, 408, 420, 432, 446, 464, 512 };
+
+#define MINRES (zoom_list[0])
+#define MAXRES (zoom_list[nelem(zoom_list) - 1])
+#define DEFRES 96
+
+static const char* title = "MuPDF/GL";
+static fz_document* doc = NULL;
+static fz_page* page = NULL;
+static pdf_document* pdf = NULL;
+static fz_outline* outline = NULL;
+static fz_link* links = NULL;
+
+static int number = 0;
+
+static struct texture page_tex = { 0 };
+static int scroll_x = 0, scroll_y = 0;
+static int canvas_x = 0, canvas_w = 100;
+static int canvas_y = 0, canvas_h = 100;
+
+static struct texture annot_tex[256];
+static int annot_count = 0;
+
+static int screen_w = 1280, screen_h = 720;
+static int window_w = 1, window_h = 1;
+
+static int oldpage = 0, currentpage = 0;
+static float oldzoom = DEFRES, currentzoom = DEFRES;
+static float oldrotate = 0, currentrotate = 0;
+static fz_matrix page_ctm, page_inv_ctm;
+
+static int isfullscreen = 0;
+static int g_oldinvertcolor = 0, g_isinvertcolor = 0;
+static int showoutline = 0;
+static int showlinks = 0;
+static int showsearch = 0;
+static int showinfo = 0;
+
+static int history_count = 0;
+static int history[256];
+static int future_count = 0;
+static int future[256];
+static int marks[10];
+
+static int search_active = 0;
+static struct input search_input = { { 0 }, 0 };
+static char* search_needle = 0;
+static int search_dir = 1;
+static int search_page = -1;
+static int search_hit_page = -1;
+static int search_hit_count = 0;
+static fz_rect search_hit_bbox[500];
+
+static unsigned int next_power_of_two(unsigned int n)
+{
+    --n;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    return ++n;
+}
+
+
 /* OpenGL capabilities */
 static int has_ARB_texture_non_power_of_two = 1;
 static GLint max_texture_size = 8192;
@@ -36,12 +101,23 @@ static GLuint g_backcolor = 0xffffff;
 
 static GLuint get_random_backcolor(void)
 {
-    /*static const GLuint sa_bkcolor_list[] = {0xFFFFFF, 0xEEE8D5, 0xFDF6E3, 0xCEC7C1, 0xa5adb0, 0xb58900};*/
-    //srand(time(0)); //use current time as seed for random generator
-    int random_variable = rand() ; // % nelem(sa_bkcolor_list);
+    static const GLuint sa_bkcolor_list[] = {
+        0xFFFFFF,  //white
+        0xEEE8D5,  //base2
+        0xFDF6E3,  //base3
+        0xE5DED6,  //newsprint
+        0xEFEFEF,   //palegray
+        0xe6ebee,   //elegant
+        0xf3f6f4,   //delight
+        0xfff6da,   //sandbox
+        0xe6e6e6,   //greyscale
+        0xf1feee,   //sprout
+    };
+    srand(time(0)); //use current time as seed for random generator
+    int random_variable = rand()  % nelem(sa_bkcolor_list);
 
-    /*return sa_bkcolor_list[random_variable];*/
-    return (GLuint)random_variable;
+    return sa_bkcolor_list[random_variable];
+    /*return (GLuint)random_variable;*/
 }
 
 static void ui_begin(void)
@@ -116,13 +192,13 @@ void ui_draw_image(struct texture* tex, float x, float y)
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_TRIANGLE_STRIP);
     {
-        GLubyte red, green, blue;
+        glColor4ub(
+                (g_backcolor >> 16) & 0xFF, 
+                (g_backcolor >> 8) & 0xFF,
+                g_backcolor & 0xFF,
+                255);
+        /*float x_pos = 100 * page_ctm.a;*/
 
-        red = (g_backcolor >> 16) & 0xFF;
-        green = (g_backcolor >> 8) & 0xFF;
-        blue = g_backcolor & 0xFF;
-
-        glColor4ub(red, green, blue, 255);
         glTexCoord2f(0, tex->t);
         glVertex2f(x + tex->x, y + tex->y + tex->h);
         glTexCoord2f(0, 0);
@@ -136,8 +212,6 @@ void ui_draw_image(struct texture* tex, float x, float y)
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 }
-
-static const int zoom_list[] = { 18, 24, 36, 48, 54, 64, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252, 264, 276, 288, 300, 312, 324, 336, 348, 360, 372, 384, 396, 408, 420, 432, 446, 464, 512 };
 
 static int zoom_in(int oldres)
 {
@@ -155,68 +229,6 @@ static int zoom_out(int oldres)
         if (zoom_list[i] < oldres && zoom_list[i + 1] >= oldres)
             return zoom_list[i];
     return zoom_list[0];
-}
-
-#define MINRES (zoom_list[0])
-#define MAXRES (zoom_list[nelem(zoom_list) - 1])
-#define DEFRES 96
-
-static const char* title = "MuPDF/GL";
-static fz_document* doc = NULL;
-static fz_page* page = NULL;
-static pdf_document* pdf = NULL;
-static fz_outline* outline = NULL;
-static fz_link* links = NULL;
-
-static int number = 0;
-
-static struct texture page_tex = { 0 };
-static int scroll_x = 0, scroll_y = 0;
-static int canvas_x = 0, canvas_w = 100;
-static int canvas_y = 0, canvas_h = 100;
-
-static struct texture annot_tex[256];
-static int annot_count = 0;
-
-static int screen_w = 1280, screen_h = 720;
-static int window_w = 1, window_h = 1;
-
-static int oldpage = 0, currentpage = 0;
-static float oldzoom = DEFRES, currentzoom = DEFRES;
-static float oldrotate = 0, currentrotate = 0;
-static fz_matrix page_ctm, page_inv_ctm;
-
-static int isfullscreen = 0;
-static int g_oldinvertcolor = 0, g_isinvertcolor = 0;
-static int showoutline = 0;
-static int showlinks = 0;
-static int showsearch = 0;
-static int showinfo = 0;
-
-static int history_count = 0;
-static int history[256];
-static int future_count = 0;
-static int future[256];
-static int marks[10];
-
-static int search_active = 0;
-static struct input search_input = { { 0 }, 0 };
-static char* search_needle = 0;
-static int search_dir = 1;
-static int search_page = -1;
-static int search_hit_page = -1;
-static int search_hit_count = 0;
-static fz_rect search_hit_bbox[500];
-
-static unsigned int next_power_of_two(unsigned int n)
-{
-    --n;
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    return ++n;
 }
 
 static void update_title(void)
@@ -923,6 +935,12 @@ static void do_app(void)
         case ']':
             currentrotate -= 0.1;
             break;
+        case '{':
+            currentrotate += 90;
+            break;
+        case '}':
+            currentrotate -= 90;
+            break;
         case 'L':
             showlinks = !showlinks;
             break;
@@ -1471,7 +1489,7 @@ int main(int argc, char** argv)
     int pageno = 1;
     int c;
 
-    while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:C:h:")) != -1) {
+    while ((c = fz_getopt(argc, argv, "p:r:W:H:S:U:C:")) != -1) {
         switch (c) {
         default:
             usage(argv[0]);
@@ -1496,9 +1514,6 @@ int main(int argc, char** argv)
             break;
         case 'C':
             g_backcolor = strtol(fz_optarg, NULL, 16);
-            break;
-        case 'h':
-            usage(argv[0]);
             break;
         }
     }
