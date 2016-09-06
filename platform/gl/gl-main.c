@@ -917,10 +917,11 @@ static void do_app(void)
         case 'Y':
             g_y_shrink = fz_maxi(0, (g_y_shrink - 5));
             break;
-        /*case 'r':*/
-            /*g_x_shrink = g_y_shrink = 0;*/
-            /*g_backcolor = 0xFFFFFF;*/
-            /*break;*/
+        case 'r':
+            g_x_shrink = g_y_shrink = 0;
+            g_backcolor = 0xFFFFFF;
+            currentrotate = 0;
+            break;
         case 'c':
             g_backcolor = get_random_backcolor();
             break;
