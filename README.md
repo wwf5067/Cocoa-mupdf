@@ -21,15 +21,15 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 打开的同时设置阅读的背景色
 
 	mupdf-gl -C 0xfdf6e3 filename.pdf
-	
-* +,= 放大
-* - 缩小
-* w 适合宽度
-* H 适合高度
-* h,j,k,l 移动
-* d,u,b,<space> 翻页
-* v 反转颜色(晚上用不错)
-* q 退出
+
+* `+,=` 放大
+* `-` 缩小
+* `w` 适合宽度
+* `H` 适合高度
+* `h,j,k,l` 移动
+* `d,u,b,<space>` 翻页
+* `v` 反转颜色(晚上用不错)
+* `q` 退出
 * ……
 
 ## 使用效果
@@ -41,16 +41,26 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 ### 用`[`和`]`进行左右旋转微调，再也不担心倾斜问题了
 
 ![before rotate](http://ww2.sinaimg.cn/mw690/3e37e59cgw1f73rgm7xudj20si0kudj0.jpg)
+
+
 ![after rotate](http://ww3.sinaimg.cn/mw690/3e37e59cgw1f73rgkit87j20si0kujur.jpg)
+
+### 用`x,y`进行水平和垂直空白区裁剪（大写`X,Y`对裁剪区反向操作）
+
+![](http://ww1.sinaimg.cn/mw690/3e37e59cgw1f7jv5yiybqj211y0lc7fn.jpg)
 
 ### 用`v`反色，夜间减少屏幕亮度刺眼
 
 ![no invert](http://ww3.sinaimg.cn/mw690/3e37e59cgw1f73rggc44ij20j70kuwk9.jpg)
+
+
 ![invert](http://ww1.sinaimg.cn/mw690/3e37e59cgw1f73rgj32akj20j70ku7a2.jpg)
 
 ### 随意设置背景色，总有适合你的
 
 ![solarized](http://ww4.sinaimg.cn/mw690/3e37e59cgw1f77e8jv2kjj20m20ku463.jpg)
+
+
 ![green](http://ww2.sinaimg.cn/mw690/3e37e59cgw1f77e8e4qxvj20m20kun4d.jpg)
 
 ---
