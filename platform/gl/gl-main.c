@@ -59,6 +59,7 @@ static fz_matrix page_ctm, page_inv_ctm;
 
 static int isfullscreen = 0;
 static int g_oldinvertcolor = 0, g_isinvertcolor = 0;
+static int g_old_x_shrink = 0, g_old_y_shrink = 0, g_x_shrink = 0, g_y_shrink = 0;
 static int showoutline = 0;
 static int showlinks = 0;
 static int showsearch = 0;
@@ -302,7 +303,24 @@ void render_page(void)
     links = fz_load_links(ctx, page);
 
     pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx), 0);
-    texture_from_pixmap(&page_tex, pix);
+
+    if (g_x_shrink || g_y_shrink){
+        /* crop page white margin */
+        fz_irect nsize;
+        fz_pixmap_bbox_no_ctx(pix, &nsize);
+        nsize.x0 += g_x_shrink * currentzoom / 72;
+        nsize.y0 += g_y_shrink * currentzoom / 72;
+        nsize.x1 -= g_x_shrink * currentzoom / 72;
+        nsize.y1 -= g_y_shrink * currentzoom / 72;
+        fz_pixmap* shrink_pix = fz_new_pixmap_with_bbox(ctx, pix->colorspace, &nsize, 0);
+        fz_copy_pixmap_rect(ctx, shrink_pix, pix, &nsize);
+
+        texture_from_pixmap(&page_tex, shrink_pix);
+        fz_drop_pixmap(ctx, shrink_pix);
+    }
+    else {
+        texture_from_pixmap(&page_tex, pix);
+    }
     fz_drop_pixmap(ctx, pix);
 
     annot_count = 0;
@@ -887,6 +905,22 @@ static void do_app(void)
         case 'z':
             currentzoom = number > 0 ? number : DEFRES;
             break;
+        case 'x':
+            g_x_shrink = fz_mini(canvas_w/2, g_x_shrink + 5);
+            break;
+        case 'X':
+            g_x_shrink = fz_maxi(0, (g_x_shrink - 5));
+            break;
+        case 'y':
+            g_y_shrink = fz_mini(canvas_h/2, g_y_shrink + 5);
+            break;
+        case 'Y':
+            g_y_shrink = fz_maxi(0, (g_y_shrink - 5));
+            break;
+        /*case 'r':*/
+            /*g_x_shrink = g_y_shrink = 0;*/
+            /*g_backcolor = 0xFFFFFF;*/
+            /*break;*/
         case 'c':
             g_backcolor = get_random_backcolor();
             break;
@@ -1079,13 +1113,16 @@ static void do_canvas(void)
 
     float x, y;
 
-    if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate || g_oldinvertcolor != g_isinvertcolor) {
+    if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate ||
+            g_oldinvertcolor != g_isinvertcolor || g_old_x_shrink != g_x_shrink || g_old_y_shrink != g_y_shrink) {
         render_page();
         update_title();
         oldpage = currentpage;
         oldzoom = currentzoom;
         oldrotate = currentrotate;
         g_oldinvertcolor = g_isinvertcolor;
+        g_old_x_shrink = g_x_shrink;
+        g_old_y_shrink = g_y_shrink;
     }
 
     if (ui.x >= canvas_x && ui.x < canvas_x + canvas_w && ui.y >= canvas_y && ui.y < canvas_y + canvas_h) {
