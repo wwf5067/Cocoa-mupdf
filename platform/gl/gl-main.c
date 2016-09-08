@@ -70,6 +70,7 @@ static int history[256];
 static int future_count = 0;
 static int future[256];
 static int marks[10];
+static const int MAX_RECENT_FILES = 50; // histroy file list
 
 static int search_active = 0;
 static struct input search_input = { { 0 }, 0 };
@@ -906,13 +907,13 @@ static void do_app(void)
             currentzoom = number > 0 ? number : DEFRES;
             break;
         case 'x':
-            g_x_shrink = fz_mini(canvas_w/2, g_x_shrink + 5);
+            g_x_shrink = fz_mini(page_tex.w/2, g_x_shrink + 5);
             break;
         case 'X':
             g_x_shrink = fz_maxi(0, (g_x_shrink - 5));
             break;
         case 'y':
-            g_y_shrink = fz_mini(canvas_h/2, g_y_shrink + 5);
+            g_y_shrink = fz_mini(page_tex.h/2, g_y_shrink + 5);
             break;
         case 'Y':
             g_y_shrink = fz_maxi(0, (g_y_shrink - 5));
@@ -921,6 +922,7 @@ static void do_app(void)
             g_x_shrink = g_y_shrink = 0;
             g_backcolor = 0xFFFFFF;
             currentrotate = 0;
+            auto_zoom();
             break;
         case 'c':
             g_backcolor = get_random_backcolor();
@@ -952,7 +954,8 @@ static void do_app(void)
                 smart_move_forward();
             break;
         case 'g':
-            jump_to_page(number - 1);
+            if (number > 0) 
+                jump_to_page(number - 1);
             break;
         case 'G':
             jump_to_page(fz_count_pages(ctx, doc) - 1);
@@ -998,16 +1001,30 @@ static void do_app(void)
             search_input.q = search_input.end;
             break;
         case 'k':
-            scroll_y -= canvas_h / 5;
+            if (scroll_y <= 0){
+                if (currentpage > 1){
+                    scroll_y = page_tex.h;
+                    currentpage -= 1;
+                }
+            } else {
+                scroll_y -= canvas_h / 7;
+            }
             break;
         case 'j':
-            scroll_y += canvas_h / 5;
+            if (scroll_y + canvas_h >= page_tex.h){
+                if (currentpage + 1 < fz_count_pages(ctx, doc)){
+                    scroll_y = 0;
+                    currentpage += 1;
+                }
+            } else {
+                scroll_y += canvas_h / 7;
+            }
             break;
         case 'h':
-            scroll_x -= canvas_w / 7;
+            scroll_x -= canvas_w / 10;
             break;
         case 'l':
-            scroll_x += canvas_w / 7;
+            scroll_x += canvas_w / 10;
             break;
         case KEY_UP:
             scroll_y -= 10;
@@ -1491,14 +1508,15 @@ static void save_reading_progress(const char* filename, int pages)
     FILE* tmpfp = fopen(temp_file, "w");
     if (!tmpfp)
         return;
-    fprintf(tmpfp, "%s:%d\n", filename, pages + 1);
+    fprintf(tmpfp, "%s:%d\n", filename, pages + 1); /* save current file record */
 
     sprintf(original_file, "%s/.mupdf.history", home);
     FILE* fp = fopen(original_file, "r");
     if (fp != NULL) {
         const int len = strlen(filename);
+        int record = MAX_RECENT_FILES;
 
-        while (fgets(line, sizeof(line), fp)) {
+        while (--record > 0 && fgets(line, sizeof(line), fp)) {
             if (strncmp(line, filename, len) != 0) {
                 fprintf(tmpfp, "%s", line);
             }
