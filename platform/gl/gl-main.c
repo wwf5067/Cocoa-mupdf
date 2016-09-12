@@ -92,7 +92,6 @@ static unsigned int next_power_of_two(unsigned int n)
     return ++n;
 }
 
-
 /* OpenGL capabilities */
 static int has_ARB_texture_non_power_of_two = 1;
 static GLint max_texture_size = 8192;
@@ -104,19 +103,19 @@ static GLuint g_backcolor = 0xffffff;
 static GLuint get_random_backcolor(void)
 {
     static const GLuint sa_bkcolor_list[] = {
-        0xFFFFFF,  //white
-        0xEEE8D5,  //base2
-        0xFDF6E3,  //base3
-        0xE5DED6,  //newsprint
-        0xEFEFEF,   //palegray
-        0xe6ebee,   //elegant
-        0xf3f6f4,   //delight
-        0xfff6da,   //sandbox
-        0xe6e6e6,   //greyscale
-        0xf1feee,   //sprout
+        0xFFFFFF, //white
+        0xEEE8D5, //base2
+        0xFDF6E3, //base3
+        0xE5DED6, //newsprint
+        0xEFEFEF, //palegray
+        0xe6ebee, //elegant
+        0xf3f6f4, //delight
+        0xfff6da, //sandbox
+        0xe6e6e6, //greyscale
+        0xf1feee, //sprout
     };
     srand(time(0)); //use current time as seed for random generator
-    int random_variable = rand()  % nelem(sa_bkcolor_list);
+    int random_variable = rand() % nelem(sa_bkcolor_list);
 
     return sa_bkcolor_list[random_variable];
     /*return (GLuint)random_variable;*/
@@ -195,10 +194,10 @@ void ui_draw_image(struct texture* tex, float x, float y)
     glBegin(GL_TRIANGLE_STRIP);
     {
         glColor4ub(
-                (g_backcolor >> 16) & 0xFF, 
-                (g_backcolor >> 8) & 0xFF,
-                g_backcolor & 0xFF,
-                255);
+            (g_backcolor >> 16) & 0xFF,
+            (g_backcolor >> 8) & 0xFF,
+            g_backcolor & 0xFF,
+            255);
         /*float x_pos = 100 * page_ctm.a;*/
 
         glTexCoord2f(0, tex->t);
@@ -238,7 +237,7 @@ static void update_title(void)
     static char buf[1024];
     /*
 	size_t n = strlen(title);
-	
+
 	// 大于15个汉字就会出问题，需要用utf-8的字符处理函数，现在临时将buf加大，并且不裁剪
 	if (n > 50)
 		sprintf(buf, "...%s - %d / %d", title + n - 50, currentpage + 1, fz_count_pages(ctx, doc));
@@ -305,7 +304,7 @@ void render_page(void)
 
     pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx), 0);
 
-    if (g_x_shrink || g_y_shrink){
+    if (g_x_shrink || g_y_shrink) {
         /* crop page white margin */
         fz_irect nsize;
         fz_pixmap_bbox_no_ctx(pix, &nsize);
@@ -318,8 +317,7 @@ void render_page(void)
 
         texture_from_pixmap(&page_tex, shrink_pix);
         fz_drop_pixmap(ctx, shrink_pix);
-    }
-    else {
+    } else {
         texture_from_pixmap(&page_tex, pix);
     }
     fz_drop_pixmap(ctx, pix);
@@ -734,14 +732,6 @@ static void toggle_fullscreen(void)
 		glutReshapeWindow(oldw, oldh);
 		isfullscreen = 0;
 	}
-#else
-    if (!isfullscreen) {
-        glfwMaximizeWindow(window);
-        isfullscreen = 1;
-    } else {
-        glfwRestoreWindow(window);
-        isfullscreen = 0;
-    }
 #endif
 }
 
@@ -787,6 +777,18 @@ static void auto_zoom(void)
         auto_zoom_h();
 }
 
+static void move_backward(int row_sz)
+{
+    if (scroll_y <= 0) {
+        if (currentpage > 0) {
+            scroll_y = page_tex.h;
+            currentpage -= 1;
+        }
+    } else {
+        scroll_y -= row_sz;
+    }
+}
+
 static void smart_move_backward(void)
 {
     if (scroll_y <= 0) {
@@ -802,6 +804,18 @@ static void smart_move_backward(void)
         }
     } else {
         scroll_y -= canvas_h * 9 / 10;
+    }
+}
+
+static void move_forward(int row_sz)
+{
+    if (scroll_y + canvas_h >= page_tex.h) {
+        if (currentpage + 1 < fz_count_pages(ctx, doc)) {
+            scroll_y = 0;
+            currentpage += 1;
+        }
+    } else {
+        scroll_y += row_sz;
     }
 }
 
@@ -907,13 +921,13 @@ static void do_app(void)
             currentzoom = number > 0 ? number : DEFRES;
             break;
         case 'x':
-            g_x_shrink = fz_mini(page_tex.w/2, g_x_shrink + 5);
+            g_x_shrink = fz_mini(page_tex.w / 2, g_x_shrink + 5);
             break;
         case 'X':
             g_x_shrink = fz_maxi(0, (g_x_shrink - 5));
             break;
         case 'y':
-            g_y_shrink = fz_mini(page_tex.h/2, g_y_shrink + 5);
+            g_y_shrink = fz_mini(page_tex.h / 2, g_y_shrink + 5);
             break;
         case 'Y':
             g_y_shrink = fz_maxi(0, (g_y_shrink - 5));
@@ -942,19 +956,23 @@ static void do_app(void)
             currentpage += fz_maxi(number, 1);
             break;
         case 'b':
-        case 'u':
             number = fz_maxi(number, 1);
             while (number--)
-                smart_move_backward();
+                move_backward(canvas_h * 9 / 10);
             break;
         case ' ':
-        case 'd':
             number = fz_maxi(number, 1);
             while (number--)
-                smart_move_forward();
+                move_forward(canvas_h * 9 / 10);
+            break;
+        case 'u':
+            move_backward(canvas_h * 9 / 10);
+            break;
+        case 'd':
+            move_forward(canvas_h * 9 / 10);
             break;
         case 'g':
-            if (number > 0) 
+            if (number > 0)
                 jump_to_page(number - 1);
             break;
         case 'G':
@@ -1001,24 +1019,10 @@ static void do_app(void)
             search_input.q = search_input.end;
             break;
         case 'k':
-            if (scroll_y <= 0){
-                if (currentpage > 1){
-                    scroll_y = page_tex.h;
-                    currentpage -= 1;
-                }
-            } else {
-                scroll_y -= canvas_h / 7;
-            }
+            move_backward(canvas_h / 7);
             break;
         case 'j':
-            if (scroll_y + canvas_h >= page_tex.h){
-                if (currentpage + 1 < fz_count_pages(ctx, doc)){
-                    scroll_y = 0;
-                    currentpage += 1;
-                }
-            } else {
-                scroll_y += canvas_h / 7;
-            }
+            move_forward(canvas_h / 7);
             break;
         case 'h':
             scroll_x -= canvas_w / 10;
@@ -1131,8 +1135,7 @@ static void do_canvas(void)
 
     float x, y;
 
-    if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate ||
-            g_oldinvertcolor != g_isinvertcolor || g_old_x_shrink != g_x_shrink || g_old_y_shrink != g_y_shrink) {
+    if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate || g_oldinvertcolor != g_isinvertcolor || g_old_x_shrink != g_x_shrink || g_old_y_shrink != g_y_shrink) {
         render_page();
         update_title();
         oldpage = currentpage;
@@ -1293,7 +1296,7 @@ static void on_char(GLFWwindow* window, unsigned int key, int mod)
     ui.mod = mod;
 
     /* Let Shift + Space == PageUp */
-    if (GLFW_MOD_SHIFT == mod && ' ' == key){
+    if (GLFW_MOD_SHIFT == mod && ' ' == key) {
         ui.key = 'b';
     }
 
@@ -1582,18 +1585,17 @@ int main(int argc, char** argv)
         if (!win_open_file(filename, sizeof filename))
             exit(0);
 #else
-        /*usage(argv[0]);*/
-        char const * lTheOpenFileName;
-        char const * lFilterPatterns[] = {"*.pdf"};
+        char const* lTheOpenFileName;
+        char const* lFilterPatterns[] = { "*.pdf" };
 
         lTheOpenFileName = tinyfd_openFileDialog(
-                "Please choose a pdf file",
-                "",
-                nelem(lFilterPatterns),
-                lFilterPatterns,
-                NULL,
-                0);
-        if (lTheOpenFileName){
+            "Please choose a pdf file",
+            "",
+            nelem(lFilterPatterns),
+            lFilterPatterns,
+            NULL,
+            0);
+        if (lTheOpenFileName) {
             fz_strlcpy(filename, lTheOpenFileName, sizeof(filename));
         } else {
             usage(argv[0]);
