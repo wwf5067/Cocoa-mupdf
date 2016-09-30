@@ -958,12 +958,12 @@ static void do_app(void)
         case 'b':
             number = fz_maxi(number, 1);
             while (number--)
-                move_backward(canvas_h * 9 / 10);
+                smart_move_backward();
             break;
         case ' ':
             number = fz_maxi(number, 1);
             while (number--)
-                move_forward(canvas_h * 9 / 10);
+                smart_move_forward();
             break;
         case 'u':
             move_backward(canvas_h * 9 / 10);
