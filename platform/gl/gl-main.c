@@ -991,6 +991,9 @@ static void do_app(void)
         case ']':
             currentrotate -= 0.1;
             break;
+        case '|':
+            currentrotate = 0;
+            break;
         case '{':
             currentrotate += 90;
             break;
