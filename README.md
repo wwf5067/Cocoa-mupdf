@@ -66,13 +66,10 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 
 ### 打赏一杯咖啡
 
-#### Paypal.me:
-
-[Have a cup of coffee](https://www.paypal.me/deanhuangdi/5)
 
 #### 支付宝:
 
-<img src="http://ww4.sinaimg.cn/large/006tNbRwgy1ffqlmx1qp6j31401opjzy.jpg" width="320" alt="谢谢您的一杯咖啡" align=left />
+<img src="http://ww4.sinaimg.cn/large/006tNbRwgy1ffqlmx1qp6j31401opjzy.jpg" width="320" alt="谢谢您的一杯咖啡"/>
 
 
 
