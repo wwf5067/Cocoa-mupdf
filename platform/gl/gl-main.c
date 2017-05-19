@@ -26,7 +26,9 @@ struct ui ui;
 fz_context* ctx = NULL;
 GLFWwindow* window = NULL;
 
-static const int zoom_list[] = { 18, 24, 36, 48, 54, 64, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252, 264, 276, 288, 300, 312, 324, 336, 348, 360, 372, 384, 396, 408, 420, 432, 446, 464, 512 };
+static const int zoom_list[] = { 18, 24, 36, 48, 54, 64, 72, 84, 96, 108, 120, 
+    132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252, 264, 276, 288, 300, 
+    312, 324, 336, 348, 360, 372, 384, 396, 408, 420, 432, 446, 464, 512 };
 
 #define MINRES (zoom_list[0])
 #define MAXRES (zoom_list[nelem(zoom_list) - 1])
@@ -267,19 +269,23 @@ void texture_from_pixmap(struct texture* tex, fz_pixmap* pix)
 
     if (has_ARB_texture_non_power_of_two) {
         if (tex->w > max_texture_size || tex->h > max_texture_size)
-            fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", tex->w, tex->h, max_texture_size);
+            fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", 
+                tex->w, tex->h, max_texture_size);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->w, tex->h, 0, pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->w, tex->h, 0, 
+            pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
         tex->s = 1;
         tex->t = 1;
     } else {
         int w2 = next_power_of_two(tex->w);
         int h2 = next_power_of_two(tex->h);
         if (w2 > max_texture_size || h2 > max_texture_size)
-            fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", w2, h2, max_texture_size);
+            fz_warn(ctx, "texture size (%d x %d) exceeds implementation limit (%d)", 
+                w2, h2, max_texture_size);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w2, h2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->w, tex->h, pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tex->w, tex->h, 
+            pix->n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, pix->samples);
         tex->s = (float)tex->w / w2;
         tex->t = (float)tex->h / h2;
     }
@@ -714,22 +720,29 @@ static void do_forms(float xofs, float yofs)
 
 static void toggle_fullscreen(void)
 {
-#if 0
-	static int oldw = 100, oldh = 100, oldx = 0, oldy = 0;
-
+#if 1
+	 GLFWmonitor *monitor = glfwGetPrimaryMonitor(); 
+	static int win_x = 0, win_y = 0;
+	static int win_w = 100, win_h = 100;
+	 static int win_rr = 60; 
 	if (!isfullscreen)
 	{
-		oldw = glutGet(GLUT_WINDOW_WIDTH);
-		oldh = glutGet(GLUT_WINDOW_HEIGHT);
-		oldx = glutGet(GLUT_WINDOW_X);
-		oldy = glutGet(GLUT_WINDOW_Y);
-		glutFullScreen();
+		 const GLFWvidmode *mode = glfwGetVideoMode(monitor); 
+		 win_rr = mode->refreshRate; 
+		glfwGetWindowPos(window, &win_x, &win_y);
+		glfwGetWindowSize(window, &win_w, &win_h);
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate); 
+
+        // glfwSetWindowPos(window, 0, 0);
+        // glfwSetWindowSize(window, screen_w, screen_h);
+
 		isfullscreen = 1;
 	}
 	else
 	{
-		glutPositionWindow(oldx, oldy);
-		glutReshapeWindow(oldw, oldh);
+        // glfwSetWindowPos(window, win_x, win_y - SCREEN_FURNITURE_H);
+        // glfwSetWindowSize(window, win_w, win_h);
+         glfwSetWindowMonitor(window, NULL, win_x, win_y, win_w, win_h, win_rr); 
 		isfullscreen = 0;
 	}
 #endif
@@ -1138,7 +1151,9 @@ static void do_canvas(void)
 
     float x, y;
 
-    if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate || g_oldinvertcolor != g_isinvertcolor || g_old_x_shrink != g_x_shrink || g_old_y_shrink != g_y_shrink) {
+    if (oldpage != currentpage || oldzoom != currentzoom || oldrotate != currentrotate ||
+            g_oldinvertcolor != g_isinvertcolor || g_old_x_shrink != g_x_shrink || 
+            g_old_y_shrink != g_y_shrink ) {
         render_page();
         update_title();
         oldpage = currentpage;

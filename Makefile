@@ -292,13 +292,7 @@ $(MJSGEN) : $(MJSGEN_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
 # $(MUJSTEST) : $(MUJSTEST_OBJ) $(MUPDF_LIB) $(THIRD_LIB)
 # 	$(LINK_CMD)
 
-ifeq "$(HAVE_GLFW)" "yes"
-MUVIEW_GLFW := $(OUT)/mupdf-gl
-MUVIEW_GLFW_OBJ := $(addprefix $(OUT)/platform/gl/, gl-font.o gl-input.o gl-main.o)
-$(MUVIEW_GLFW_OBJ) : $(FITZ_HDR) $(PDF_HDR) platform/gl/gl-app.h
-$(MUVIEW_GLFW) : $(MUVIEW_GLFW_OBJ) $(MUPDF_LIB) $(THIRD_LIB) $(GLFW_LIB)
-	$(LINK_CMD) $(GLFW_LIBS)
-endif
+
 
 ifeq "$(HAVE_X11)" "yes"
 MUVIEW_X11 := $(OUT)/mupdf-x11
@@ -316,6 +310,13 @@ $(MUVIEW_X11_CURL) : $(MUVIEW_X11_CURL_OBJ) $(MUPDF_LIB) $(THIRD_LIB) $(CURL_LIB
 endif
 endif
 
+ifeq "$(HAVE_GLFW)" "yes"
+MUVIEW_GLFW := $(OUT)/mupdf-gl
+MUVIEW_GLFW_OBJ := $(addprefix $(OUT)/platform/gl/, gl-font.o gl-input.o gl-main.o)
+$(MUVIEW_GLFW_OBJ) : $(FITZ_HDR) $(PDF_HDR) platform/gl/gl-app.h
+$(MUVIEW_GLFW) : $(MUVIEW_GLFW_OBJ) $(MUPDF_LIB) $(THIRD_LIB) $(GLFW_LIB)
+	$(LINK_CMD) $(GLFW_LIBS)
+endif
 ifeq "$(HAVE_WIN32)" "yes"
 MUVIEW_WIN32 := $(OUT)/mupdf
 MUVIEW_WIN32_OBJ := $(addprefix $(OUT)/platform/x11/, win_main.o pdfapp.o win_res.o)
