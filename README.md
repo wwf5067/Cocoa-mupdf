@@ -1,4 +1,5 @@
 ## 编译
+
 mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，也就意味着Splitview不能使用，要用原生的Cocoa窗口。
 
 修改了Makefile相关的三个文件，直接make就可以了，生成使用Cocoa窗口的目标文件`build/release/mupdf-gl`。
@@ -71,7 +72,7 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 
 #### 支付宝:
 
-![](http://ww4.sinaimg.cn/large/006tNbRwgy1ffqlmx1qp6j31401opjzy.jpg)
+<img src="http://ww4.sinaimg.cn/large/006tNbRwgy1ffqlmx1qp6j31401opjzy.jpg" width="320" alt="谢谢您的一杯咖啡" align=left />
 
 
 
