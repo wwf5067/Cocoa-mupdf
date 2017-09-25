@@ -64,11 +64,6 @@ mupdf默认使用的是X11窗口，在Mac OS X下X11窗口不支持Fullscreen，
 
 ![green](http://ww2.sinaimg.cn/mw690/3e37e59cgw1f77e8e4qxvj20m20kun4d.jpg)
 
-### 打赏一杯咖啡
-
-<div style="margin:0 auto;text-align:center;"><img src="http://ww4.sinaimg.cn/large/006tNbRwgy1ffro7wwx4qj30cd09c0tf.jpg" alt="捐赠" /></div>
-<div style="margin:0 auto;text-align:center;padding:0 0 30px"><span title="Wechat"><img src="http://ww4.sinaimg.cn/large/006tNbRwgy1ffrnypm54hj319w1okadp.jpg" width="221" alt="Wechat"/></span><span title="alipay"><img src="http://ww2.sinaimg.cn/large/006tNbRwgy1ffroocv9ipj31401gsah1.jpg" width="221" alt="alipay"/></span></div>
-
 ---
 
 ABOUT
